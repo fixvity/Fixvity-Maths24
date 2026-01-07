@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Volume Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+  --blue:#2563eb;
+  --bg:#f4f6fb;
+  --card:#ffffff;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto;
+  background:var(--bg);
+  color:#111827;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
+}
+.card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:0 12px 30px rgba(0,0,0,.08);
+  padding:18px;
+  margin-bottom:16px;
+}
+h1{
+  margin:0;
+  color:var(--blue);
+}
+.subtitle{
+  color:#6b7280;
+  margin-top:6px;
+}
+label{
+  font-weight:600;
+  font-size:14px;
+}
+input,select{
+  width:100%;
+  padding:12px;
+  margin-top:6px;
+  margin-bottom:14px;
+  border-radius:10px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
+button{
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--blue);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+button.secondary{
+  background:#eef2ff;
+  color:#111;
+  margin-top:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+}
+.result-box{
+  background:#f9fafb;
+  border-radius:10px;
+  padding:14px;
+}
+.hidden{display:none}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<!-- INPUT -->
+<div class="card">
+<h1>Volume Calculator</h1>
+<p class="subtitle">Accurate volume calculation for common 3D shapes</p>
+
+<label>Shape</label>
+<select id="shape" onchange="updateFields()">
+  <option value="cube">Cube</option>
+  <option value="cuboid">Cuboid</option>
+  <option value="sphere">Sphere</option>
+  <option value="cylinder">Cylinder</option>
+  <option value="cone">Cone</option>
+  <option value="pyramid">Square Pyramid</option>
+</select>
+
+<div id="sideField">
+  <label>Side Length</label>
+  <input id="side" type="number" step="any">
+</div>
+
+<div id="cuboidFields" class="hidden">
+  <label>Length</label>
+  <input id="length" type="number" step="any">
+  <label>Width</label>
+  <input id="width" type="number" step="any">
+  <label>Height</label>
+  <input id="height" type="number" step="any">
+</div>
+
+<div id="radiusField" class="hidden">
+  <label>Radius</label>
+  <input id="radius" type="number" step="any">
+</div>
+
+<div id="heightField" class="hidden">
+  <label>Height</label>
+  <input id="height2" type="number" step="any">
+</div>
+
+<button onclick="calculate()">Calculate Volume</button>
+<button class="secondary" onclick="resetAll()">Reset</button>
+</div>
+
+<!-- OUTPUT -->
+<div class="grid">
+<div class="card">
+<h3>Result</h3>
+<div id="result" class="result-box"></div>
+</div>
+
+<div class="card">
+<h3>Details</h3>
+<div id="details" class="result-box"></div>
+</div>
+</div>
+
+</div>
+
+<script>
+function updateFields(){
+  document.getElementById("sideField").classList.add("hidden");
+  document.getElementById("cuboidFields").classList.add("hidden");
+  document.getElementById("radiusField").classList.add("hidden");
+  document.getElementById("heightField").classList.add("hidden");
+
+  const shape = document.getElementById("shape").value;
+
+  if(shape==="cube") document.getElementById("sideField").classList.remove("hidden");
+  if(shape==="cuboid") document.getElementById("cuboidFields").classList.remove("hidden");
+  if(shape==="sphere") document.getElementById("radiusField").classList.remove("hidden");
+  if(shape==="cylinder" || shape==="cone"){
+    document.getElementById("radiusField").classList.remove("hidden");
+    document.getElementById("heightField").classList.remove("hidden");
+  }
+  if(shape==="pyramid"){
+    document.getElementById("sideField").classList.remove("hidden");
+    document.getElementById("heightField").classList.remove("hidden");
+  }
+}
+
+function calculate(){
+  const shape=document.getElementById("shape").value;
+  let V=0, formula="";
+
+  if(shape==="cube"){
+    const a=+side.value;
+    V=a*a*a;
+    formula="a³";
+  }
+  if(shape==="cuboid"){
+    V=length.value*width.value*height.value;
+    formula="l × w × h";
+  }
+  if(shape==="sphere"){
+    const r=radius.value;
+    V=(4/3)*Math.PI*r*r*r;
+    formula="(4/3)πr³";
+  }
+  if(shape==="cylinder"){
+    const r=radius.value,h=height2.value;
+    V=Math.PI*r*r*h;
+    formula="πr²h";
+  }
+  if(shape==="cone"){
+    const r=radius.value,h=height2.value;
+    V=(1/3)*Math.PI*r*r*h;
+    formula="(1/3)πr²h";
+  }
+  if(shape==="pyramid"){
+    const a=side.value,h=height2.value;
+    V=(1/3)*a*a*h;
+    formula="(1/3)a²h";
+  }
+
+  result.innerHTML=`<strong>Volume = ${V.toFixed(6)}</strong>`;
+  details.innerHTML=`Formula used: <strong>${formula}</strong><br>π = ${Math.PI}`;
+}
+
+function resetAll(){
+  document.querySelectorAll("input").forEach(i=>i.value="");
+  result.innerHTML="";
+  details.innerHTML="";
+}
+updateFields();
+</script>
+
+</body>
+</html>
