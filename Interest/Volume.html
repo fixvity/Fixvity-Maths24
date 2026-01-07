@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Volume Calculator</title>
+<title>Volume Calculator – 3D Shapes</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <style>
@@ -10,6 +10,7 @@
   --blue:#2563eb;
   --bg:#f4f6fb;
   --card:#ffffff;
+  --muted:#6b7280;
   --radius:14px;
 }
 *{box-sizing:border-box}
@@ -28,26 +29,21 @@ body{
   background:var(--card);
   border-radius:var(--radius);
   box-shadow:0 12px 30px rgba(0,0,0,.08);
-  padding:18px;
-  margin-bottom:16px;
+  padding:20px;
+  margin-bottom:18px;
 }
-h1{
-  margin:0;
-  color:var(--blue);
-}
-.subtitle{
-  color:#6b7280;
-  margin-top:6px;
-}
+h1{margin:0;color:var(--blue)}
+.subtitle{color:var(--muted);margin-top:6px}
+
 label{
   font-weight:600;
-  font-size:14px;
+  display:block;
+  margin-top:14px;
 }
 input,select{
   width:100%;
   padding:12px;
   margin-top:6px;
-  margin-bottom:14px;
   border-radius:10px;
   border:1px solid #d1d5db;
   font-size:15px;
@@ -61,76 +57,82 @@ button{
   color:white;
   font-weight:700;
   cursor:pointer;
+  margin-top:14px;
 }
 button.secondary{
   background:#eef2ff;
   color:#111;
-  margin-top:10px;
 }
+
 .grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:16px;
+  gap:18px;
 }
 @media(max-width:900px){
   .grid{grid-template-columns:1fr}
 }
+
 .result-box{
   background:#f9fafb;
   border-radius:10px;
-  padding:14px;
+  padding:16px;
 }
-.hidden{display:none}
+.badge{
+  background:#e0e7ff;
+  color:#1e3a8a;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:12px;
+  display:inline-block;
+  margin-bottom:8px;
+}
 </style>
 </head>
 
 <body>
 <div class="container">
 
-<!-- INPUT -->
 <div class="card">
 <h1>Volume Calculator</h1>
-<p class="subtitle">Accurate volume calculation for common 3D shapes</p>
+<p class="subtitle">Accurate volume calculation for 3D shapes • International standards</p>
 
 <label>Shape</label>
 <select id="shape" onchange="updateFields()">
-  <option value="cube">Cube</option>
-  <option value="cuboid">Cuboid</option>
-  <option value="sphere">Sphere</option>
-  <option value="cylinder">Cylinder</option>
-  <option value="cone">Cone</option>
-  <option value="pyramid">Square Pyramid</option>
+<option value="cube">Cube</option>
+<option value="cuboid">Cuboid</option>
+<option value="sphere">Sphere</option>
+<option value="cylinder">Cylinder</option>
+<option value="cone">Cone</option>
+<option value="square_pyramid">Square Pyramid</option>
+<option value="triangular_prism">Triangular Prism</option>
+<option value="rectangular_pyramid">Rectangular Pyramid</option>
+<option value="cone_frustum">Cone Frustum</option>
+<option value="pyramid_frustum">Pyramid Frustum</option>
+<option value="ellipsoid">Ellipsoid</option>
+<option value="hemisphere">Hemisphere</option>
+<option value="tetrahedron">Tetrahedron</option>
+<option value="hollow_cylinder">Hollow Cylinder</option>
+<option value="hollow_sphere">Hollow Sphere</option>
+<option value="oblique_cylinder">Oblique Cylinder</option>
+<option value="oblique_prism">Oblique Prism</option>
+<option value="right_prism">Right Circular Prism</option>
 </select>
 
-<div id="sideField">
-  <label>Side Length</label>
-  <input id="side" type="number" step="any">
-</div>
+<label>Unit</label>
+<select id="unit">
+<option value="cm³">cm³</option>
+<option value="m³">m³</option>
+<option value="in³">in³</option>
+<option value="ft³">ft³</option>
+</select>
 
-<div id="cuboidFields" class="hidden">
-  <label>Length</label>
-  <input id="length" type="number" step="any">
-  <label>Width</label>
-  <input id="width" type="number" step="any">
-  <label>Height</label>
-  <input id="height" type="number" step="any">
-</div>
-
-<div id="radiusField" class="hidden">
-  <label>Radius</label>
-  <input id="radius" type="number" step="any">
-</div>
-
-<div id="heightField" class="hidden">
-  <label>Height</label>
-  <input id="height2" type="number" step="any">
-</div>
+<div id="inputs"></div>
 
 <button onclick="calculate()">Calculate Volume</button>
 <button class="secondary" onclick="resetAll()">Reset</button>
 </div>
 
-<!-- OUTPUT -->
 <div class="grid">
 <div class="card">
 <h3>Result</h3>
@@ -146,71 +148,74 @@ button.secondary{
 </div>
 
 <script>
-function updateFields(){
-  document.getElementById("sideField").classList.add("hidden");
-  document.getElementById("cuboidFields").classList.add("hidden");
-  document.getElementById("radiusField").classList.add("hidden");
-  document.getElementById("heightField").classList.add("hidden");
+const PI=Math.PI;
 
-  const shape = document.getElementById("shape").value;
-
-  if(shape==="cube") document.getElementById("sideField").classList.remove("hidden");
-  if(shape==="cuboid") document.getElementById("cuboidFields").classList.remove("hidden");
-  if(shape==="sphere") document.getElementById("radiusField").classList.remove("hidden");
-  if(shape==="cylinder" || shape==="cone"){
-    document.getElementById("radiusField").classList.remove("hidden");
-    document.getElementById("heightField").classList.remove("hidden");
-  }
-  if(shape==="pyramid"){
-    document.getElementById("sideField").classList.remove("hidden");
-    document.getElementById("heightField").classList.remove("hidden");
-  }
+function field(name,id){
+ return `<label>${name}</label><input type="number" id="${id}" step="any">`;
 }
 
+function updateFields(){
+ const s=document.getElementById("shape").value;
+ let f="";
+ if(s==="cube") f+=field("Side (a)","a");
+ if(s==="cuboid") f+=field("Length (l)","l")+field("Width (w)","w")+field("Height (h)","h");
+ if(s==="sphere") f+=field("Radius (r)","r");
+ if(s==="cylinder"||s==="oblique_cylinder") f+=field("Radius (r)","r")+field("Height (h)","h");
+ if(s==="cone") f+=field("Radius (r)","r")+field("Height (h)","h");
+ if(s==="square_pyramid") f+=field("Base side (a)","a")+field("Height (h)","h");
+ if(s==="triangular_prism") f+=field("Base (b)","b")+field("Triangle height","ht")+field("Length (L)","L");
+ if(s==="rectangular_pyramid") f+=field("Length (l)","l")+field("Width (w)","w")+field("Height (h)","h");
+ if(s==="cone_frustum") f+=field("Large radius (R)","R")+field("Small radius (r)","r")+field("Height (h)","h");
+ if(s==="pyramid_frustum") f+=field("Area top (A₁)","A1")+field("Area bottom (A₂)","A2")+field("Height (h)","h");
+ if(s==="ellipsoid") f+=field("a","a")+field("b","b")+field("c","c");
+ if(s==="hemisphere") f+=field("Radius (r)","r");
+ if(s==="tetrahedron") f+=field("Edge (a)","a");
+ if(s==="hollow_cylinder") f+=field("Outer radius (R)","R")+field("Inner radius (r)","r")+field("Height (h)","h");
+ if(s==="hollow_sphere") f+=field("Outer radius (R)","R")+field("Inner radius (r)","r");
+ if(s==="oblique_prism"||s==="right_prism") f+=field("Base area","A")+field("Height (h)","h");
+ document.getElementById("inputs").innerHTML=f;
+}
+updateFields();
+
 function calculate(){
-  const shape=document.getElementById("shape").value;
-  let V=0, formula="";
+ const s=document.getElementById("shape").value;
+ const u=document.getElementById("unit").value;
+ let V=0, formula="";
+ const g=id=>Number(document.getElementById(id).value);
 
-  if(shape==="cube"){
-    const a=+side.value;
-    V=a*a*a;
-    formula="a³";
-  }
-  if(shape==="cuboid"){
-    V=length.value*width.value*height.value;
-    formula="l × w × h";
-  }
-  if(shape==="sphere"){
-    const r=radius.value;
-    V=(4/3)*Math.PI*r*r*r;
-    formula="(4/3)πr³";
-  }
-  if(shape==="cylinder"){
-    const r=radius.value,h=height2.value;
-    V=Math.PI*r*r*h;
-    formula="πr²h";
-  }
-  if(shape==="cone"){
-    const r=radius.value,h=height2.value;
-    V=(1/3)*Math.PI*r*r*h;
-    formula="(1/3)πr²h";
-  }
-  if(shape==="pyramid"){
-    const a=side.value,h=height2.value;
-    V=(1/3)*a*a*h;
-    formula="(1/3)a²h";
-  }
+ try{
+ if(s==="cube"){V=g("a")**3;formula="a³";}
+ if(s==="cuboid"){V=g("l")*g("w")*g("h");formula="lwh";}
+ if(s==="sphere"){V=4/3*PI*g("r")**3;formula="(4/3)πr³";}
+ if(s==="cylinder"||s==="oblique_cylinder"){V=PI*g("r")**2*g("h");formula="πr²h";}
+ if(s==="cone"){V=1/3*PI*g("r")**2*g("h");formula="(1/3)πr²h";}
+ if(s==="square_pyramid"){V=1/3*g("a")**2*g("h");formula="(1/3)a²h";}
+ if(s==="triangular_prism"){V=0.5*g("b")*g("ht")*g("L");formula="½bhL";}
+ if(s==="rectangular_pyramid"){V=1/3*g("l")*g("w")*g("h");formula="(1/3)lwh";}
+ if(s==="cone_frustum"){V=1/3*PI*g("h")*(g("R")**2+g("r")**2+g("R")*g("r"));formula="(1/3)πh(R²+r²+Rr)";}
+ if(s==="pyramid_frustum"){V=g("h")/3*(g("A1")+g("A2")+Math.sqrt(g("A1")*g("A2")));formula="h/3(A₁+A₂+√A₁A₂)";}
+ if(s==="ellipsoid"){V=4/3*PI*g("a")*g("b")*g("c");formula="(4/3)πabc";}
+ if(s==="hemisphere"){V=2/3*PI*g("r")**3;formula="(2/3)πr³";}
+ if(s==="tetrahedron"){V=Math.sqrt(2)/12*g("a")**3;formula="√2/12 a³";}
+ if(s==="hollow_cylinder"){V=PI*g("h")*(g("R")**2-g("r")**2);formula="πh(R²−r²)";}
+ if(s==="hollow_sphere"){V=4/3*PI*(g("R")**3-g("r")**3);formula="(4/3)π(R³−r³)";}
+ if(s==="oblique_prism"||s==="right_prism"){V=g("A")*g("h");formula="Ah";}
+ }
+ catch{ return; }
 
-  result.innerHTML=`<strong>Volume = ${V.toFixed(6)}</strong>`;
-  details.innerHTML=`Formula used: <strong>${formula}</strong><br>π = ${Math.PI}`;
+ document.getElementById("result").innerHTML=
+ `<span class="badge">Final Answer</span><br>
+ <strong>Volume = ${V.toFixed(6)} ${u}</strong>`;
+
+ document.getElementById("details").innerHTML=
+ `Formula used:<br><strong>${formula}</strong><br><br>π = ${PI}`;
 }
 
 function resetAll(){
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  result.innerHTML="";
-  details.innerHTML="";
+ document.getElementById("result").innerHTML="";
+ document.getElementById("details").innerHTML="";
+ updateFields();
 }
-updateFields();
 </script>
 
 </body>
